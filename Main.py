@@ -3,8 +3,6 @@ import string
 import re
 
 
-
-
 def swapOutDashesForUnderscores(modify):
     dashLetter = re.compile('-')
     return dashLetter.sub("_", modify)
@@ -53,22 +51,50 @@ def generateLivestreamerCommand (parsedList, index):
     number = parsedList[index][2]
     url = parsedList[index][3]
 
-    return "livestreamer -o " + show + "_" + number + title + ".mp4 " + url + " best; " 
+    return "livestreamer -o " + show + "_" + number + title + " " + url + " best; " 
 
 
-def getURLs():
-    listOfURLs = []
+def getURLsFromUser():
+    ''' 
+    '''
+    prompt = """Please provide Crunchyroll URLS. 
+    You may paste each url one at a time hitting enter after each,
+    or you may paste sevearl URLs at once, each sperated by an Enter
+    When you have entered all the URLs you wish to process,
+    press enter on a blank line or type 'Done' """
+    print prompt
+
+    listOfURLs = [] # Array of URLs to be filled with user provided URLS 
     while True:
-        print "Paste & Enter a URL or type Done"
         userInput = raw_input()
         if (userInput == "done" or userInput == "Done" or userInput == ""):
             break
-        listOfURLs.append(userInput)
+        elif ("-season" in userInput or "-s" in userInput or "--season" in userInput):
+            '''Determine what season they want the next set of urls or stop season mode etc.
+            '''
+            raise NotImplementedError
+        else:
+            listOfURLs.append(userInput)
     return listOfURLs
 
 def parseOneURL(fullURL):
+    ''' Given a single Crunchyroll.com url, it will format and extract the relevant information
+    needed to properly name the file.
+    The desired format is:
+        Anime_Name_[Season Identifier]_EpisodeNum_Episode_Name
+        where Season Identifier is user defined and EpisodeNum has a preceeding 0 if single digit
+
+    Example:
+    Given:  http://www.crunchyroll.com/food-wars-shokugeki-no-soma/episode-6-the-meat-invader-678171
+    Return: Food_Wars_Shokugeki_No_Soma_06_The_Meat_Invader
+    '''
+
     o = urlparse(fullURL)
     urlPath = o.path
+    '''urlparse returns an object seperated into its parts. For this we only care about the .path part
+    Given: http://www.crunchyroll.com/food-wars-shokugeki-no-soma/episode-6-the-meat-invader-678171
+    The .path will be 'food-wars-shokugeki-no-soma/episode-6-the-meat-invader-678171'
+    '''
 
     urlPath = swapOutDashesForUnderscores(urlPath)
     wordGroups = findWordGroups(urlPath)
@@ -77,20 +103,24 @@ def parseOneURL(fullURL):
     EpisodeNumber = findEpisodeNumber (urlPath)
     return [ShowName, EpisodeTitle, EpisodeNumber, fullURL]
 
-def parseURLs (listOfURLs):
-    
+def parseURLs (listOfURLs):  
+    ''' Takes the URLS out one at a time and hands them to the 
+    parseOneURL function. The newly parsed url overwrites the 
+    non-parsed url. (i.e. In-place).
+    '''
     i = 0
     for url in listOfURLs:
-        
         listOfURLs[i] = parseOneURL(url) #extracted info
-        #listOfURLs[] = url #original url
         i = i + 1
-
-
     return listOfURLs
 
 
-userProvidedURLs = getURLs()
+''' This program has 3 distinct stages. 
+1. Request a set of urls from the user and store them
+2. Parse and formulate the compiled Livestreamer command
+3. Return the string to the user
+'''
+userProvidedURLs = getURLsFromUser()
 parsedList = parseURLs (userProvidedURLs)
 completeLivestreamerCommand = generateMultipleLivestreamerCommandLine(parsedList)
 
