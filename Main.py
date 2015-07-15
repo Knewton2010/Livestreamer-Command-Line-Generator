@@ -85,6 +85,8 @@ def parseURLs (listOfURLs):
         listOfURLs[i] = parseOneURL(url) #extracted info
         #listOfURLs[] = url #original url
         i = i + 1
+
+
     return listOfURLs
 
 
